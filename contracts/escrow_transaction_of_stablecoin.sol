@@ -31,6 +31,7 @@ contract StablecoinEscrow is Ownable {
     // Create a new stablecoin escrow
     function createEscrow(address _seller, uint256 _amount) external {
         require(_amount > 0, "Amount must be greater than 0");
+        require(_seller != address(0), "Invalid seller address");
         require(stablecoin.transferFrom(msg.sender, address(this), _amount), "Transfer failed");
 
         uint256 escrowId = escrows.length;
@@ -42,9 +43,10 @@ contract StablecoinEscrow is Ownable {
     // Fund the stablecoin escrow
     function fundEscrow(uint256 _escrowId) external {
         require(_escrowId < escrows.length, "Invalid escrow ID");
+
         Escrow storage escrow = escrows[_escrowId];
-        require(escrow.buyer == msg.sender, "Only the buyer can fund the escrow");
         require(escrow.state == EscrowState.Created, "Escrow is not in the Created state");
+        require(escrow.buyer == msg.sender, "Only the buyer can fund the escrow");
 
         escrow.state = EscrowState.Funded;
 
@@ -54,6 +56,7 @@ contract StablecoinEscrow is Ownable {
     // Complete the stablecoin escrow
     function completeEscrow(uint256 _escrowId) external onlyOwner {
         require(_escrowId < escrows.length, "Invalid escrow ID");
+
         Escrow storage escrow = escrows[_escrowId];
         require(escrow.state == EscrowState.Funded, "Escrow is not in the Funded state");
 
@@ -68,6 +71,7 @@ contract StablecoinEscrow is Ownable {
     // Cancel the stablecoin escrow
     function cancelEscrow(uint256 _escrowId) external {
         require(_escrowId < escrows.length, "Invalid escrow ID");
+
         Escrow storage escrow = escrows[_escrowId];
         require(msg.sender == escrow.buyer || msg.sender == owner(), "Only buyer or owner can cancel");
         require(escrow.state != EscrowState.Completed, "Escrow is already completed");
@@ -81,11 +85,9 @@ contract StablecoinEscrow is Ownable {
     }
     
     function getBalance(address user_account) external returns (uint){
-    
-       string memory data = "User Balance is : ";
-       uint user_bal = user_account.balance;
-       emit CheckBalance(data, user_bal );
-       return (user_bal);
-
+        require(user_account != address(0), "Invalid address");
+        uint user_bal = user_account.balance;
+        emit CheckBalance(user_bal);
+        return (user_bal);
     }
 }
